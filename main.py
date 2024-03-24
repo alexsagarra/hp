@@ -4,7 +4,8 @@ from discord.ext import commands
 import os
 from dotenv import load_dotenv
 
-import hp
+from hpapi import Hp
+from pprint import pprint as pp
 
 load_dotenv()
 
@@ -12,14 +13,14 @@ DISCORD_APP_TOKEN = os.getenv("DISCORD_APP_TOKEN")
 print(f"DISCORD_APP_TOKEN {DISCORD_APP_TOKEN}")
 
 
-hpapi = hp.Hp()
-characters = hpapi.getCharacters
-print(characters)
-
+hp = Hp()
 
 # You define the necessary intents
 intents = discord.Intents.default()
 intents.messages = True  # For example, this line enable the message content intent
+intents.typing = False
+intents.presences = False
+intents.message_content = True
 
 # And don't forget to include inside your commands.
 # bot = commands.Bot(command_prefix='!', intents=intents)
@@ -52,25 +53,50 @@ async def on_member_join(member):
     await member.dm_channel.send(f"Hi {member.name}, welcome to my Discord server!")
 
 
-@client.event
-async def on_message(message):
-    """message"""
-    if "hp" in message.content.lower():
-        await message.channel.send("Harry Potter API 🎈🎉")
+# @client.event
+# async def on_message(message):
+#     """message"""
+#     if "hp" in message.content.lower():
+#         await message.channel.send("Harry Potter API 🎈🎉")
 
 
 @client.event
-async def on_message(message):
+async def on_message(message: discord.Message):
     """message"""
+ 
     if message.author == client.user:
         return
+    
+    print(f"Incomming: {message.author.name}, {message.channel.name}, {message.content}")
+
 
     if "ok" in message.content.lower():
+        print("ok")
         await message.channel.send("Harry Potter API 🎈")
         return
+    
+    elif "characters" in message.content.lower():
+        print("characters")
+        characters = hp.get_characters()
+        pp(characters)
+        for character in characters:
+           await message.channel.send(f"name: {character['actor']} id: {character['id']}") 
+        # await message.channel.send(characters)
+        return
+    
+    elif "character" in message.content.lower():
+        print("character")
+        character = hp.get_character()
+        pp(character)
+        for k,v in character.items():
+           await message.channel.send(f"{k} {v}") 
+        # await message.channel.send(characters)
+        return
 
-    await message.channel.send("....")
-    return
+    else:
+        await message.channel.send("....")
+        print("else")
+        return
 
 
 @client.command(name="characters")
